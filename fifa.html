@@ -2,153 +2,174 @@
 <html lang="hu">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mini FIFA</title>
 <style>
-body {
-    text-align: center;
-    background: #2e8b57;
-    font-family: Arial, sans-serif;
-}
-
-canvas {
-    background: #3cb371;
-    border: 3px solid white;
-    margin-top: 20px;
-}
+body{margin:0;background:#1f7a3a;font-family:Arial,sans-serif;color:white}
+#ui{padding:10px;text-align:center}
+canvas{display:block;margin:auto;background:#2da44e;border:3px solid #fff}
 </style>
 </head>
 <body>
-
-<h1>Mini FIFA</h1>
-<p>Nyilak: mozgás | Szóköz: lövés</p>
-
-<canvas id="game" width="900" height="500"></canvas>
+<div id="ui">
+<h2>Mini FIFA</h2>
+<p>WASD = mozgás | Space = lövés | X = passz</p>
+<div id="score">Hazai 0 - 0 Vendég | 90:00</div>
+</div>
+<canvas id="game" width="1000" height="600"></canvas>
 
 <script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+const c=document.getElementById("game");
+const ctx=c.getContext("2d");
 
-const player = {
-    x: 150,
-    y: 250,
-    size: 20,
-    speed: 5
-};
+let home=0, away=0, timeLeft=90*60;
 
-const ball = {
-    x: 250,
-    y: 250,
-    r: 10,
-    vx: 0,
-    vy: 0
-};
+const player={x:200,y:300,r:15,speed:4};
+const ball={x:500,y:300,r:8,vx:0,vy:0};
 
-const goal = {
-    x: 850,
-    y: 180,
-    w: 20,
-    h: 140
-};
+const teammates=[
+{x:300,y:200,r:12},{x:300,y:400,r:12},
+{x:450,y:250,r:12},{x:450,y:350,r:12}
+];
 
-let score = 0;
-const keys = {};
+const enemies=[
+{x:700,y:200,r:12},{x:700,y:400,r:12},
+{x:600,y:250,r:12},{x:600,y:350,r:12}
+];
 
-document.addEventListener("keydown", e => {
-    keys[e.key] = true;
+const keys={};
 
-    if (e.code === "Space") {
-        let dx = ball.x - player.x;
-        let dy = ball.y - player.y;
-        let dist = Math.sqrt(dx*dx + dy*dy);
+document.addEventListener("keydown",e=>{
+ keys[e.key.toLowerCase()]=true;
 
-        if(dist < 50){
-            ball.vx = 10;
-            ball.vy = 0;
-        }
-    }
+ if(e.code==="Space"){
+   shoot();
+ }
+ if(e.key.toLowerCase()==="x"){
+   passBall();
+ }
 });
 
-document.addEventListener("keyup", e => {
-    keys[e.key] = false;
+document.addEventListener("keyup",e=>{
+ keys[e.key.toLowerCase()]=false;
 });
 
-function update() {
-
-    if(keys["ArrowUp"]) player.y -= player.speed;
-    if(keys["ArrowDown"]) player.y += player.speed;
-    if(keys["ArrowLeft"]) player.x -= player.speed;
-    if(keys["ArrowRight"]) player.x += player.speed;
-
-    let dx = ball.x - player.x;
-    let dy = ball.y - player.y;
-    let dist = Math.sqrt(dx*dx + dy*dy);
-
-    if(dist < player.size + ball.r){
-        ball.vx = dx * 0.15;
-        ball.vy = dy * 0.15;
-    }
-
-    ball.x += ball.vx;
-    ball.y += ball.vy;
-
-    ball.vx *= 0.98;
-    ball.vy *= 0.98;
-
-    if(ball.x < ball.r || ball.x > canvas.width - ball.r) ball.vx *= -1;
-    if(ball.y < ball.r || ball.y > canvas.height - ball.r) ball.vy *= -1;
-
-    if(
-        ball.x > goal.x &&
-        ball.y > goal.y &&
-        ball.y < goal.y + goal.h
-    ){
-        score++;
-        alert("GÓÓÓL! Pontszám: " + score);
-
-        ball.x = 250;
-        ball.y = 250;
-        ball.vx = 0;
-        ball.vy = 0;
-    }
+function shoot(){
+ let dx=950-ball.x;
+ let dy=300-ball.y;
+ let len=Math.hypot(dx,dy);
+ ball.vx=dx/len*12;
+ ball.vy=dy/len*12;
 }
 
-function draw() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 4;
-    ctx.strokeRect(0,0,canvas.width,canvas.height);
-
-    ctx.beginPath();
-    ctx.arc(canvas.width/2, canvas.height/2, 60, 0, Math.PI*2);
-    ctx.stroke();
-
-    ctx.fillStyle = "yellow";
-    ctx.fillRect(goal.x, goal.y, goal.w, goal.h);
-
-    ctx.fillStyle = "blue";
-    ctx.beginPath();
-    ctx.arc(player.x, player.y, player.size, 0, Math.PI*2);
-    ctx.fill();
-
-    ctx.fillStyle = "white";
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
-    ctx.fill();
-
-    ctx.fillStyle = "white";
-    ctx.font = "30px Arial";
-    ctx.fillText("Gólok: " + score, 20, 40);
+function passBall(){
+ let mate=teammates[0];
+ let dx=mate.x-ball.x;
+ let dy=mate.y-ball.y;
+ let len=Math.hypot(dx,dy);
+ ball.vx=dx/len*8;
+ ball.vy=dy/len*8;
 }
 
-function gameLoop(){
-    update();
-    draw();
-    requestAnimationFrame(gameLoop);
+function update(){
+ if(keys["w"]) player.y-=player.speed;
+ if(keys["s"]) player.y+=player.speed;
+ if(keys["a"]) player.x-=player.speed;
+ if(keys["d"]) player.x+=player.speed;
+
+ let dx=ball.x-player.x;
+ let dy=ball.y-player.y;
+ let d=Math.hypot(dx,dy);
+
+ if(d<25){
+   ball.vx=dx*0.15;
+   ball.vy=dy*0.15;
+ }
+
+ enemies.forEach(e=>{
+   if(ball.x<e.x) e.x-=0.7;
+   else e.x+=0.7;
+
+   if(ball.y<e.y) e.y-=0.7;
+   else e.y+=0.7;
+ });
+
+ ball.x+=ball.vx;
+ ball.y+=ball.vy;
+ ball.vx*=0.98;
+ ball.vy*=0.98;
+
+ if(ball.y<0||ball.y>600) ball.vy*=-1;
+
+ if(ball.x>980 && ball.y>220 && ball.y<380){
+   home++;
+   reset();
+ }
+
+ if(ball.x<20 && ball.y>220 && ball.y<380){
+   away++;
+   reset();
+ }
+
+ timeLeft=Math.max(0,timeLeft-1/60);
+
+ const mins=Math.floor(timeLeft/60);
+ const secs=Math.floor(timeLeft%60);
+ document.getElementById("score").textContent =
+   `Hazai ${home} - ${away} Vendég | ${mins}:${String(secs).padStart(2,"0")}`;
 }
 
-gameLoop();
+function reset(){
+ ball.x=500; ball.y=300;
+ ball.vx=0; ball.vy=0;
+}
+
+function draw(){
+ ctx.clearRect(0,0,1000,600);
+
+ ctx.strokeStyle="white";
+ ctx.lineWidth=4;
+ ctx.strokeRect(0,0,1000,600);
+
+ ctx.beginPath();
+ ctx.arc(500,300,80,0,Math.PI*2);
+ ctx.stroke();
+
+ ctx.fillStyle="yellow";
+ ctx.fillRect(0,220,20,160);
+ ctx.fillRect(980,220,20,160);
+
+ ctx.fillStyle="blue";
+ ctx.beginPath();
+ ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillStyle="cyan";
+ teammates.forEach(p=>{
+   ctx.beginPath();
+   ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+   ctx.fill();
+ });
+
+ ctx.fillStyle="red";
+ enemies.forEach(p=>{
+   ctx.beginPath();
+   ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+   ctx.fill();
+ });
+
+ ctx.fillStyle="white";
+ ctx.beginPath();
+ ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
+ ctx.fill();
+}
+
+function loop(){
+ update();
+ draw();
+ requestAnimationFrame(loop);
+}
+loop();
 </script>
-
 </body>
 </html>

@@ -1,96 +1,132 @@
+<!DOCTYPE html>
 <html lang="hu">
 <head>
 <meta charset="UTF-8">
-<title>Mini Royale</title>
+<title>Mini Clash Royale</title>
 <style>
-body {
-    text-align: center;
-    font-family: Arial, sans-serif;
-    background: #87ceeb;
-}
-
-#arena {
-    width: 800px;
-    height: 400px;
-    margin: auto;
-    border: 3px solid black;
-    background: lightgreen;
-    position: relative;
-}
-
-.tower {
-    width: 60px;
-    height: 100px;
-    background: gray;
-    position: absolute;
-    top: 150px;
-    color: white;
-    line-height: 100px;
-}
-
-#playerTower {
-    left: 20px;
-}
-
-#enemyTower {
-    right: 20px;
-}
-
-.unit {
-    width: 30px;
-    height: 30px;
-    background: blue;
-    border-radius: 50%;
-    position: absolute;
-    top: 185px;
-}
+body{margin:0;background:#3aa0ff;font-family:Arial;color:white;text-align:center}
+#top{padding:10px;background:#1f4e79}
+#arena{position:relative;width:900px;height:500px;margin:10px auto;background:#6cc070;border:4px solid #222;overflow:hidden}
+.tower{position:absolute;width:70px;height:120px;background:#666;color:white;font-weight:bold;display:flex;align-items:center;justify-content:center}
+#playerTower{left:20px;top:190px}
+#enemyTower{right:20px;top:190px}
+.card{padding:8px 12px;margin:5px}
 </style>
 </head>
 <body>
-
-<h1>Mini Royale</h1>
-
-<button onclick="spawnUnit()">Harcos küldése</button>
+<div id="top">
+<h2>Mini Clash Royale</h2>
+<div>Elixír: <span id="elixir">10</span>/10 | Aranytorony HP: <span id="enemyhp">500</span></div>
+<button class="card" onclick="spawn('knight')">Lovag (3)</button>
+<button class="card" onclick="spawn('giant')">Óriás (5)</button>
+<button class="card" onclick="spawn('archer')">Íjász (4)</button>
+</div>
 
 <div id="arena">
-    <div class="tower" id="playerTower">100</div>
-    <div class="tower" id="enemyTower">100</div>
+<div class="tower" id="playerTower">500</div>
+<div class="tower" id="enemyTower">500</div>
 </div>
 
 <script>
-let enemyHP = 100;
+const arena=document.getElementById('arena');
+let elixir=10;
+let enemyHP=500;
+let playerHP=500;
 
-function spawnUnit() {
-    const arena = document.getElementById("arena");
+const units=[];
+const enemies=[];
 
-    let unit = document.createElement("div");
-    unit.className = "unit";
-    unit.style.left = "80px";
+setInterval(()=>{
+  if(elixir<10) elixir+=0.1;
+  document.getElementById('elixir').innerText=Math.floor(elixir);
+},100);
 
-    arena.appendChild(unit);
+function createUnit(x,type,team){
+  const div=document.createElement('div');
+  div.style.position='absolute';
+  div.style.width='30px';
+  div.style.height='30px';
+  div.style.borderRadius='50%';
+  div.style.top='235px';
+  div.style.left=x+'px';
 
-    let pos = 80;
+  let hp=40,speed=1,damage=5,color='blue';
 
-    let move = setInterval(() => {
-        pos += 5;
-        unit.style.left = pos + "px";
+  if(type==='giant'){hp=120;speed=.5;damage=15;}
+  if(type==='archer'){hp=30;speed=1.2;damage=8;color='cyan';}
 
-        if (pos > 680) {
-            clearInterval(move);
+  if(team==='enemy') color='red';
 
-            enemyHP -= 10;
-            document.getElementById("enemyTower").innerText = enemyHP;
+  div.style.background=color;
+  arena.appendChild(div);
 
-            unit.remove();
-
-            if (enemyHP <= 0) {
-                alert("Győztél!");
-                location.reload();
-            }
-        }
-    }, 30);
+  return {div,x,team,hp,speed,damage,type};
 }
-</script>
 
+function spawn(type){
+  const cost={knight:3,giant:5,archer:4}[type];
+  if(elixir<cost) return;
+
+  elixir-=cost;
+  units.push(createUnit(100,type,'player'));
+}
+
+function spawnEnemy(){
+  const types=['knight','giant','archer'];
+  const t=types[Math.floor(Math.random()*types.length)];
+  enemies.push(createUnit(760,t,'enemy'));
+}
+setInterval(spawnEnemy,3000);
+
+function update(){
+  units.forEach((u,i)=>{
+    u.x+=u.speed;
+    u.div.style.left=u.x+'px';
+
+    enemies.forEach((e,j)=>{
+      if(Math.abs(u.x-e.x)<25){
+        e.hp-=u.damage;
+        u.hp-=e.damage;
+
+        if(e.hp<=0){e.div.remove();enemies.splice(j,1);}
+        if(u.hp<=0){u.div.remove();units.splice(i,1);}
+      }
+    });
+
+    if(u.x>780){
+      enemyHP-=u.damage;
+      document.getElementById('enemyhp').innerText=enemyHP;
+      u.div.remove();
+      units.splice(i,1);
+
+      if(enemyHP<=0){
+        alert('Győzelem!');
+        location.reload();
+      }
+    }
+  });
+
+  enemies.forEach((e,i)=>{
+    e.x-=e.speed;
+    e.div.style.left=e.x+'px';
+
+    if(e.x<90){
+      playerHP-=e.damage;
+      document.getElementById('playerTower').innerText=playerHP;
+      e.div.remove();
+      enemies.splice(i,1);
+
+      if(playerHP<=0){
+        alert('Vereség!');
+        location.reload();
+      }
+    }
+  });
+
+  requestAnimationFrame(update);
+}
+
+update();
+</script>
 </body>
 </html>

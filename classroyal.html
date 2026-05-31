@@ -1,0 +1,96 @@
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<title>Mini Royale</title>
+<style>
+body {
+    text-align: center;
+    font-family: Arial, sans-serif;
+    background: #87ceeb;
+}
+
+#arena {
+    width: 800px;
+    height: 400px;
+    margin: auto;
+    border: 3px solid black;
+    background: lightgreen;
+    position: relative;
+}
+
+.tower {
+    width: 60px;
+    height: 100px;
+    background: gray;
+    position: absolute;
+    top: 150px;
+    color: white;
+    line-height: 100px;
+}
+
+#playerTower {
+    left: 20px;
+}
+
+#enemyTower {
+    right: 20px;
+}
+
+.unit {
+    width: 30px;
+    height: 30px;
+    background: blue;
+    border-radius: 50%;
+    position: absolute;
+    top: 185px;
+}
+</style>
+</head>
+<body>
+
+<h1>Mini Royale</h1>
+
+<button onclick="spawnUnit()">Harcos küldése</button>
+
+<div id="arena">
+    <div class="tower" id="playerTower">100</div>
+    <div class="tower" id="enemyTower">100</div>
+</div>
+
+<script>
+let enemyHP = 100;
+
+function spawnUnit() {
+    const arena = document.getElementById("arena");
+
+    let unit = document.createElement("div");
+    unit.className = "unit";
+    unit.style.left = "80px";
+
+    arena.appendChild(unit);
+
+    let pos = 80;
+
+    let move = setInterval(() => {
+        pos += 5;
+        unit.style.left = pos + "px";
+
+        if (pos > 680) {
+            clearInterval(move);
+
+            enemyHP -= 10;
+            document.getElementById("enemyTower").innerText = enemyHP;
+
+            unit.remove();
+
+            if (enemyHP <= 0) {
+                alert("Győztél!");
+                location.reload();
+            }
+        }
+    }, 30);
+}
+</script>
+
+</body>
+</html>
